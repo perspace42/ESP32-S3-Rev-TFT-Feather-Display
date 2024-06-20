@@ -17,7 +17,7 @@ Using the three buttons create the following functions
 #Libraries
 import time
 import board
-import displayio
+import displayio # type: ignore
 #Temperature Sensor Library
 import adafruit_sht4x
 #Battery Life Library
