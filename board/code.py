@@ -9,12 +9,12 @@ Using the adafruit_sht4x sensor attached to the ESP32-S3 Rev TFT Feather Board o
 -   EMC (Left Justified) , Battery Life (Right Justified)
 
 Using the three buttons create the following functions
--   Mode 1: Turn on for 1 Minute Then Turn Off
--   Mode 2: Remain On Continuously
+-   Mode 1: Remain On Continuously / Enter Sleep Mode (Switches)
+-   Mode 2: Turn on for 1 Minute Then Go To Sleep
 -   Mode 3: Display Users Name and Company Logo To Screen
 '''
 
-#Libraries
+#Libraries (CircuitPython) 
 import time
 import board
 import displayio # type: ignore
@@ -23,10 +23,16 @@ import adafruit_sht4x
 #Battery Life Library
 import adafruit_max1704x
 #GUI Library
-import terminalio
+#import terminalio
 from adafruit_display_text import label
 from adafruit_bitmap_font import bitmap_font
-import adafruit_st7789
+#import adafruit_st7789
+import digitalio
+#import alarm
+import alarm
+
+
+
 
 # Function To Find EMC
 def getEMC(temperature, humidity):
@@ -53,6 +59,7 @@ def updateText(temperature, humidity, emc, battery):
     battery_label.text = f"Bat: {battery:.1f}%"
 
 # Connect To Board
+
 # Create Inter-Integrated Circuit
 i2c = board.I2C()   # uses board.SCL and board.SDA
 
@@ -100,8 +107,23 @@ group.append(humidity_label)
 group.append(emc_label)
 group.append(battery_label)
 
-# Main Program Loop
-while True:
+# Define Buttons
+'''
+btnD0 = digitalio.DigitalInOut(board.D0)
+btnD0.direction = digitalio.Direction.INPUT
+btnD0.pull = digitalio.Pull.DOWN
+'''
+
+btnD1 = digitalio.DigitalInOut(board.D1)
+btnD1.direction = digitalio.Direction.INPUT
+btnD1.pull = digitalio.Pull.DOWN
+
+btnD2 = digitalio.DigitalInOut(board.D2)
+btnD2.direction = digitalio.Direction.INPUT
+btnD2.pull = digitalio.Pull.DOWN
+
+# Main Loop
+def main():
     # Retrieve Temperature and Humidity
     temperature, humidity = sht.measurements
 
@@ -117,3 +139,45 @@ while True:
 
     # Wait 1 Second Before Calculating Values Again
     time.sleep(1)
+
+
+# Flag Variables
+sleepMode = False
+
+# Main Program Loop
+while True:
+
+    #Check For Button Presses
+    #Enter Deep Sleep Mode Until Button Pressed Again
+    if btnD1.value:
+        #Define Alarm
+        sleepAlarm = alarm.pin.PinAlarm(pin=board.D0, value=False, pull=True)
+        alarm.exit_and_deep_sleep_until_alarms(sleepAlarm)
+
+    #Enter Light Sleep Mode For 60 Seconds Then Turn On for 5 Seconds Continously
+    if btnD2.value:
+        sleepMode = not sleepMode
+        while sleepMode:
+            #Sleep for 60 seconds
+            board.DISPLAY.brightness = 0
+            sleepAlarm = alarm.time.TimeAlarm(monotonic_time=time.monotonic() + 15)
+            alarm.light_sleep_until_alarms(sleepAlarm)
+            
+
+            #Turn on board
+            board.DISPLAY.brightness = 1.0
+
+            stop = time.monotonic() + 10
+
+            while (time.monotonic() <= stop):
+                main()
+
+                #If button pressed again
+                if btnD2.value:
+                    sleepMode = False
+                    time.sleep(2)
+                    break
+            
+            
+    #Call main if no buttons pressed        
+    main()
