@@ -23,14 +23,11 @@ import adafruit_sht4x
 #Battery Life Library
 import adafruit_max1704x
 #GUI Library
-#import terminalio
 from adafruit_display_text import label
 from adafruit_bitmap_font import bitmap_font
 #import adafruit_st7789
 import digitalio
-#import alarm
 import alarm
-
 
 
 
@@ -57,8 +54,6 @@ def updateText(temperature, humidity, emc, battery):
     humidity_label.text = f"Hum: {humidity:.1f}%"
     emc_label.text = f"EMC: {emc:.1f}"
     battery_label.text = f"Bat: {battery:.1f}%"
-
-# Connect To Board
 
 # Create Inter-Integrated Circuit
 i2c = board.I2C()   # uses board.SCL and board.SDA
@@ -133,6 +128,9 @@ def main():
 
     # Update the labels with sensor data
     updateText(temperature, humidity, emc, battery)
+
+    # Print for communication with gui program
+    print(f"Temperature: {temperature:0.1f} F\tHumidity: {humidity:0.1f} %")
 
     # Refresh the display
     board.DISPLAY.refresh()
