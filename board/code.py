@@ -177,6 +177,12 @@ while True:
                     sleepMode = False
                     time.sleep(2)
                     break
+                
+                #If sleep button pushed once
+                if btnD1.value:
+                    #Define Alarm
+                    sleepAlarm = alarm.pin.PinAlarm(pin=board.D0, value=False, pull=True)
+                    alarm.exit_and_deep_sleep_until_alarms(sleepAlarm)
             
             
     #Call main if no buttons pressed        
